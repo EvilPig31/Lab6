@@ -35,10 +35,9 @@ bool Squirrel::canAttack(NPC* other) const{
 }
 std::string Squirrel::attack(NPC* other){
     if (canAttack(other)) {
-        other->setAlive(false);
-        return name + " (Squirrel) kills " + other->getName() + " (" + other->getType() + ")";
+        return "can attack";
     }
-    return name + " (Squirrel) cannot attack " + other->getName();
+    return "cannot attack";
 }
 Werewolf::Werewolf(const std::string& name, double x, double y) : NPC(name, x, y){}
 void Werewolf::accept(NPCVisitor& visitor){
@@ -49,10 +48,9 @@ bool Werewolf::canAttack(NPC* other) const{
 }
 std::string Werewolf::attack(NPC* other){
     if (canAttack(other)) {
-        other->setAlive(false);
-        return name + " (Werewolf) kills " + other->getName() + " (" + other->getType() + ")";
+        return "can attack";
     }
-    return name + " (Werewolf) cannot attack " + other->getName();
+    return "cannot attack";
 }
 Druid::Druid(const std::string& name, double x, double y) : NPC(name, x, y){}
 
@@ -63,5 +61,5 @@ bool Druid::canAttack(NPC* other) const{
     return false;
 }
 std::string Druid::attack(NPC* other){
-    return name + " (Druid) is peaceful and does not attack anyone";
+    return "cannot attack (peaceful)";
 }

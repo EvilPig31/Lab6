@@ -28,27 +28,42 @@ void BattleVisitor::visit(Werewolf* werewolf){
 void BattleVisitor::visit(Druid* druid){
 }
 
-void BattleVisitor::resolveBattle(NPC* attacker, NPC* target) {
-    std::string attackResult = attacker->attack(target);
-    if (logger && attackResult.find("kills") != std::string::npos) {
-        logger->logBattleEvent(attackResult);
+void BattleVisitor::resolveBattle(NPC* npc1, NPC* npc2) {
+    bool npc1Can = npc1->canAttack(npc2);
+    bool npc2Can = npc2->canAttack(npc1);
+    std:: string event;
+    if (npc1Can && npc2Can){
+        npc1->setAlive(false);
+        npc2->setAlive(false);
+        event = npc1->getName() + "and" + npc2->getName() + "killed each other";
+        if (logger) logger->logBattleEvent(event);
     }
-    if (!target->isAlive()) {
-        std::string counterAttackResult = target->attack(attacker);
-        if (counterAttackResult.find("kills") != std::string::npos) {
-            attacker->setAlive(false);
-            if (logger) {
-                logger->logBattleEvent(counterAttackResult + " (counter-attack)");
-            }
-        }
+    else if (npc1Can){
+        npc2->setAlive(false);
+        event = npc1->getName() + " (" + npc1->getType() + ") killed " + npc2->getName() + " (" + npc2->getType() + ")"; 
+        if (logger) logger->logBattleEvent(event);
+    }
+    else if (npc2Can){
+        npc1->setAlive(false);
+        event = npc2->getName() + " (" + npc2->getType() + ") killed " + npc1->getName() + " (" + npc1->getType() + ")"; 
+        if (logger) logger->logBattleEvent(event);
     }
 }
 
-void BattleVisitor::executeBattle() {
-    for (auto& npc : npcs) {
-        if (npc->isAlive()) {
-            npc->accept(*this);
+void BattleVisitor::executeBattle(){
+    std::vector<std::pair<NPC*, NPC*>> battlePairs;
+    for (size_t i = 0; i < npcs.size(); i++){
+        if (!npcs[i]->isAlive()) continue;
+        for (size_t j = i + 1; j < npcs.size(); j++){
+            if (!npcs[j]->isAlive()) continue;
+            double distance = npcs[i]->calculateDistance(npcs[j].get());
+            if (distance <= battleRange) {
+                battlePairs.push_back({npcs[i].get(), npcs[j].get()});
+            }
         }
+    }
+    for (auto& pair : battlePairs) {
+        resolveBattle(pair.first, pair.second);
     }
     npcs.erase(std::remove_if(npcs.begin(), npcs.end(),
         [](const std::shared_ptr<NPC>& npc) {

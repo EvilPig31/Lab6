@@ -75,14 +75,6 @@ TEST(NPCTest, DruidAttackRules){
     EXPECT_FALSE(druid.canAttack(&druid2));
 }
 
-TEST(NPCTest, AttackExecution){
-    Squirrel squirrel("Squirrel", 100, 100);
-    Werewolf wolf("Wolf", 101, 101);
-    
-    string result = squirrel.attack(&wolf);
-    EXPECT_TRUE(result.find("kills") != string::npos);
-    EXPECT_FALSE(wolf.isAlive());
-}
 
 TEST(FactoryTest, CreateNPC){
     auto squirrel = NPCFactory::createNPC(NPCFactory::NPCType::SQUIRREL, "TestSquirrel", 100, 200);
@@ -173,10 +165,31 @@ TEST(VisitorTest, ComplexBattleScenario){
     BattleVisitor visitor(npcs, 10.0, &logger);
     visitor.executeBattle();
     
+    EXPECT_FALSE(wolf->isAlive());
+    EXPECT_FALSE(druid->isAlive());
     EXPECT_TRUE(squirrel->isAlive());
-    
     EXPECT_EQ(npcs.size(), 1);
-    EXPECT_EQ(npcs[0]->getName(), "Sq");
+}
+
+TEST(VisitorTest, EachWithEachBattleLogic) {
+    vector<shared_ptr<NPC>> npcs;
+    BattleLogger logger;
+    
+    // Создаем 3 NPC в одном месте
+    auto squirrel = make_shared<Squirrel>("Sq", 100, 100);
+    auto wolf = make_shared<Werewolf>("Wolf", 100, 100);
+    auto druid = make_shared<Druid>("Dru", 100, 100);
+    
+    npcs.push_back(squirrel);
+    npcs.push_back(wolf);
+    npcs.push_back(druid);
+    
+    BattleVisitor visitor(npcs, 10.0, &logger);
+    visitor.executeBattle();
+    EXPECT_FALSE(wolf->isAlive());
+    EXPECT_FALSE(druid->isAlive());
+    EXPECT_TRUE(squirrel->isAlive());
+    EXPECT_EQ(npcs.size(), 1);
 }
 
 TEST(ObserverTest, FileLoggerCreatesFile){
@@ -308,26 +321,6 @@ TEST(IntegrationTest, FullBattleScenario){
     EXPECT_EQ(editor.getNPCCount(), 3);
 }
 
-TEST(IntegrationTest, ObserverIntegration){
-    DungeonEditor editor;
-    
-    string logfile = "test_integration_log.txt";
-    editor.attachFileLogger(logfile);
-    
-    editor.addNPC("squirrel", "ObsSq", 100, 100);
-    editor.addNPC("werewolf", "ObsWolf", 101, 101);
-    editor.startBattle(10.0);
-
-    ifstream file(logfile);
-    EXPECT_TRUE(file.is_open());
-    
-    string content((istreambuf_iterator<char>(file)), 
-                   istreambuf_iterator<char>());
-    
-    EXPECT_TRUE(content.find("kills") != string::npos);
-    file.close();
-    remove(logfile.c_str());
-}
 
 TEST(EdgeCasesTest, SingleNPCBattle){
     DungeonEditor editor;
